@@ -1,0 +1,101 @@
+#!/bin/sh
+# This script will install the files below.
+# Please look through them first so you know what will happen.
+
+# Install by running this command:
+# curl -fL https://gist.githubusercontent.com/stefansundin/7003429/raw/install-kbd-backlight.sh | sh
+
+# Uninstall with:
+# sudo rm /opt/kbd-{backlight,lock}.sh /etc/pm/sleep.d/70-kbd-backlight
+# rm ~/.config/autostart/kbd-{backlight,lock}.sh.desktop
+
+echo
+echo "Installing /opt/kbd-backlight.sh"
+echo "           /opt/kbd-lock.sh"
+echo "           /etc/pm/sleep.d/70-kbd-backlight"
+echo "           $HOME/.config/autostart/kbd-backlight.sh.desktop"
+echo "       and $HOME/.config/autostart/kbd-lock.sh.desktop"
+echo
+echo Please provide your sudo password if prompted.
+echo
+
+sudo curl -fL -o /opt/kbd-backlight.sh https://gist.githubusercontent.com/stefansundin/7003429/raw/kbd-backlight.sh
+echo
+sudo curl -fL -o /opt/kbd-lock.sh https://gist.githubusercontent.com/stefansundin/7003429/raw/kbd-lock.sh
+echo
+sudo curl -fL -o /etc/pm/sleep.d/70-kbd-backlight https://gist.githubusercontent.com/stefansundin/7003429/raw/z-70-kbd-backlight
+echo
+sudo chmod 755 /opt/kbd-backlight.sh /opt/kbd-lock.sh /etc/pm/sleep.d/70-kbd-backlight
+
+sudo sed -i "s/USER=username/USER=$USER/g" /etc/pm/sleep.d/70-kbd-backlight
+
+cat > $HOME/.config/autostart/kbd-backlight.sh.desktop << EOF
+[Desktop Entry]
+Type=Application
+Exec=/opt/kbd-backlight.sh boot
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Keyboard backlight (restore on login)
+Comment=https://gist.github.com/stefansundin/7003429/
+EOF
+
+cat > $HOME/.config/autostart/kbd-lock.sh.desktop << EOF
+[Desktop Entry]
+Type=Application
+Exec=/opt/kbd-lock.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Keyboard backlight (dim on lock)
+Comment=https://gist.github.com/stefansundin/7003429/
+EOF
+
+cat << EOF
+Done.
+Instructions for installing acpi_call:
+sudo apt-get install git build-essential
+git clone https://github.com/mkottman/acpi_call.git
+cd acpi_call
+make
+sudo make install
+sudo depmod
+sudo modprobe acpi_call
+sudo vim /etc/modules
+acpi_call
+You may then remove the acpi_call directory.
+Note that you may have to recompile acpi_call when you update your kernel,
+but probably not for minor updates.
+Make acpi_call usable without sudo:
+sudo chmod 666 /proc/acpi/call
+sudo vim /etc/rc.local
+chmod 666 /proc/acpi/call
+You may then try changing the keyboard backlight value with:
+You can now adjust the brightness with this command:
+echo "\_SB.KBLT.KBCM 0" > /proc/acpi/call
+or: /opt/kbd-backlight.sh 0
+Use 100 to turn it fully on again. Use a value in between to adjust the brightness.
+I recommend that you set your keyboard shortcuts in CCSM instead of the normal
+keyboard shortcut manager, because many shortcuts set there will just stop
+working after reboot. Be *very* careful with this tool!!!
+sudo apt-get install compizconfig-settings-manager
+ccsm
+Enable the 'Commands' plugin and set these commands:
+/opt/kbd-backlight.sh up
+/opt/kbd-backlight.sh down
+/opt/kbd-backlight.sh 100
+/opt/kbd-backlight.sh 0
+And then the key bindings:
+<Alt>F7
+<Alt>F6
+<Shift><Alt>F7
+<Shift><Alt>F6
+Uninstall with:
+sudo rm /opt/kbd-{backlight,lock}.sh /etc/pm/sleep.d/70-kbd-backlight
+rm ~/.config/autostart/kbd-{backlight,lock}.sh.desktop
+You may also want to remove your keyboard shortcuts in CCSM.
+I recommend Chromebook users to also look at my other gist for mapping the
+function keys with Xmodmap: https://gist.github.com/stefansundin/6987698
+Donations are welcome at http://stefansundin.com/donate (PayPal)
+(scroll up and read all output)
+EOF
